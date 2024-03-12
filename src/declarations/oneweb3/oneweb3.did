@@ -1,0 +1,56 @@
+type anon_class_17_1 = 
+ service {
+   addUser: (UserData) -> ();
+   assign_role: (principal, opt Role) -> ();
+   callerPrincipal: () -> (principal);
+   createBlog: (Blog) -> ();
+   createCourse: (Course) -> ();
+   deleteBlog: (text) -> ();
+   deleteCourse: (text) -> ();
+   editCourse: (Course) -> ();
+   editMyBlog: (Blog) -> ();
+   getAllBlogs: () -> (vec Blog) query;
+   getAllCourses: () -> (vec Course) query;
+   getAllUsers: () -> (vec UserData) query;
+   getMyBlogs: () -> (vec Blog) query;
+   getUser: () -> (Result) query;
+   my_role: () -> (text);
+   updateUser: (UserData) -> ();
+ };
+type UserData = 
+ record {
+   created: int;
+   id: principal;
+   username: text;
+ };
+type Role = 
+ variant {
+   admin;
+   authorized;
+   owner;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok: UserData;
+ };
+type Course = 
+ record {
+   author: text;
+   id: text;
+   level: text;
+   plan: text;
+   title: text;
+   url: text;
+ };
+type Blog = 
+ record {
+   author: text;
+   body: text;
+   date: text;
+   id: text;
+   image: vec text;
+   introduction: text;
+   title: text;
+ };
+service : () -> anon_class_17_1

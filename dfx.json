@@ -1,0 +1,47 @@
+{
+  "canisters": {
+    "oraculumHub_backend": {
+      "type": "motoko",
+      "main": "backend/project_backend/main.mo",
+      "candid": "backend/project_backend/index.did",
+      "gzip": true
+    },
+
+    "file_scaling_manager": {
+      "main": "backend/storage/FileScalingManager.mo",
+      "type": "motoko"
+    },
+    "file_storage": {
+      "main": "backend/storage/FileStorage.mo",
+      "type": "motoko"
+    },
+
+    "internet_identity": {
+      "type": "custom",
+      "candid": "https://github.com/dfinity/internet-identity/releases/download/release-2024-03-01/internet_identity.did",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/download/release-2024-03-01/internet_identity_dev.wasm.gz",
+      "remote": {
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      },
+      "frontend": {}
+    },
+
+    "oraculumHub_frontend": {
+      "dependencies": ["oraculumHub_backend"],
+      "entrypoint": "src/index.html",
+      "source": ["dist/"],
+      "type": "assets",
+      "gzip": true
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": "mops sources"
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}

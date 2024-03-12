@@ -1,0 +1,112 @@
+type StreamingStrategy = variant {
+                           Callback:
+                            record {
+                              callback: func () -> ();
+                              token: StreamingCallbackToken;
+                            };};
+type StreamingCallbackToken = 
+ record {
+   asset_id: text;
+   chunk_index: nat;
+   content_encoding: text;
+ };
+type StreamingCallbackHttpResponse = 
+ record {
+   body: blob;
+   token: opt StreamingCallbackToken;
+ };
+type Result_3 = 
+ variant {
+   err: text;
+   ok: vec Asset;
+ };
+type Result_2 = 
+ variant {
+   err: text;
+   ok: Asset_ID;
+ };
+type Result_1 = 
+ variant {
+   err: ErrDeleteAsset;
+   ok: text;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok: Asset;
+ };
+type HttpResponse = 
+ record {
+   body: vec nat8;
+   headers: vec HeaderField;
+   status_code: nat16;
+   streaming_strategy: opt StreamingStrategy;
+ };
+type HttpRequest = 
+ record {
+   body: blob;
+   headers: vec HeaderField;
+   method: text;
+   url: text;
+ };
+type Health = 
+ record {
+   assets_size: int;
+   cycles: int;
+   heap_mb: int;
+   memory_mb: int;
+ };
+type HeaderField = 
+ record {
+   text;
+   text;
+ };
+type FileStorage = 
+ service {
+   assets_list: () -> (Result_3) query;
+   chunks_size: () -> (nat) query;
+   commit_batch: (text, vec Chunk_ID, AssetProperties, text) -> (Result_2);
+   create_chunk: (text, blob, nat) -> (nat);
+   delete_asset: (Asset_ID) -> (Result_1);
+   get: (Asset_ID) -> (Result) query;
+   get_health: () -> (Health) query;
+   http_request: (HttpRequest) -> (HttpResponse) query;
+   http_request_streaming_callback: (StreamingCallbackToken) ->
+    (StreamingCallbackHttpResponse) query;
+   is_full: () -> (bool) query;
+   version: () -> (nat) query;
+ };
+type ErrDeleteAsset = 
+ variant {
+   AssetNotFound: bool;
+   NotAuthorized: bool;
+ };
+type ContentEncoding = 
+ variant {
+   GZIP;
+   Identity;
+ };
+type Chunk_ID = nat;
+type Asset_ID = text;
+type AssetProperties = 
+ record {
+   checksum: nat32;
+   content_encoding: ContentEncoding;
+   content_type: text;
+   filename: text;
+ };
+type Asset = 
+ record {
+   canister_id: text;
+   chunks_size: nat;
+   content: opt vec blob;
+   content_encoding: ContentEncoding;
+   content_size: nat;
+   content_type: text;
+   created: int;
+   filename: text;
+   id: text;
+   owner: text;
+   url: text;
+ };
+service : (bool) -> FileStorage

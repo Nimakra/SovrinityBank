@@ -1,0 +1,19 @@
+service: () -> {
+    createBlog: (text, text, text, text, text, text) -> (variant {Ok:record {id:principal; title:text; body:text; date:text; author:text; introduction:text; image:text}; Err:text});
+    createCommunity: (text, text, vec record {id:principal; username:text}) -> (variant {Ok:record {id:principal; members:vec record {id:principal; username:text}; name:text; description:text}; Err:text});
+    createCourse: (text, text, text, text, text) -> (variant {Ok:record {id:principal; url:text; title:text; plan:text; level:text; author:text}; Err:text});
+    deleteBlog: (principal) -> (variant {Ok:record {id:principal; title:text; body:text; date:text; author:text; introduction:text; image:text}; Err:text});
+    deleteCourse: (principal) -> (variant {Ok:record {id:principal; url:text; title:text; plan:text; level:text; author:text}; Err:text});
+    getBlog: (principal) -> (variant {Ok:record {id:principal; title:text; body:text; date:text; author:text; introduction:text; image:text}; Err:text}) query;
+    getCommunityByID: (principal) -> (variant {Ok:record {id:principal; members:vec record {id:principal; username:text}; name:text; description:text}; Err:text}) query;
+    getCommunityMembers: (principal) -> (variant {Ok:vec record {id:principal; username:text}; Err:text}) query;
+    getCourseById: (principal) -> (variant {Ok:record {id:principal; url:text; title:text; plan:text; level:text; author:text}; Err:text}) query;
+    getCourseByName: (text) -> (variant {Ok:record {id:principal; url:text; title:text; plan:text; level:text; author:text}; Err:text}) query;
+    joinCommunity: (principal, text, principal) -> (variant {Ok:record {id:principal; members:vec record {id:principal; username:text}; name:text; description:text}; Err:text});
+    leaveCommunity: (principal, principal) -> (variant {Ok:record {id:principal; members:vec record {id:principal; username:text}; name:text; description:text}; Err:text});
+    listBlogs: () -> (vec record {id:principal; title:text; body:text; date:text; author:text; introduction:text; image:text}) query;
+    listCourses: () -> (vec record {id:principal; url:text; title:text; plan:text; level:text; author:text}) query;
+    registerUser: (text) -> (variant {Ok:record {id:principal; username:text}; Err:text});
+    updateBlog: (principal, text, text, text, text, text, text) -> (variant {Ok:record {id:principal; title:text; body:text; date:text; author:text; introduction:text; image:text}; Err:text});
+    updateCourse: (principal, text) -> (variant {Ok:record {id:principal; url:text; title:text; plan:text; level:text; author:text}; Err:text});
+}

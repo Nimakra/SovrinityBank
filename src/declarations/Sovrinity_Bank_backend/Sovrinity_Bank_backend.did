@@ -1,0 +1,94 @@
+type anon_class_20_1 = 
+ service {
+   addUser: (User) -> ();
+   assign_role: (principal, opt Role) -> ();
+   callerPrincipal: () -> (principal) query;
+   createAccount: (int) -> ();
+   createBank: (Bank) -> (text);
+   deposit: (int, text, text) -> (Result);
+   getAccountBalance: () -> (int) query;
+   getAllTransactions: () -> (vec Transaction__1) query;
+   getAllUsers: () -> (vec User) query;
+   getBankTransactions: () -> (vec Transaction__1) query;
+   getMyTransactions: () -> (vec Transaction__1) query;
+   getTransaction: (text) -> (opt Transaction__1) query;
+   getUser: () -> (Result_2) query;
+   my_role: () -> (text) query;
+   transfer: (principal, int, text, text) -> (Result_1);
+   updateUser: (User) -> ();
+   withdraw: (int, text, text) -> (Result);
+ };
+type User__1 = 
+ record {
+   account: Account__1;
+   created: text;
+   handle: text;
+   id: principal;
+   username: text;
+ };
+type User = 
+ record {
+   account: Account__1;
+   created: text;
+   handle: text;
+   id: principal;
+   username: text;
+ };
+type Transaction__1 = 
+ record {
+   amount: int;
+   id: text;
+   name: text;
+   recipient: principal;
+   sender: principal;
+   timestamp: text;
+ };
+type Transaction = 
+ record {
+   amount: int;
+   id: text;
+   name: text;
+   recipient: principal;
+   sender: principal;
+   timestamp: text;
+ };
+type Role = 
+ variant {
+   admin;
+   authorized;
+   owner;
+ };
+type Result_2 = 
+ variant {
+   err: text;
+   ok: User;
+ };
+type Result_1 = 
+ variant {
+   err: text;
+   ok: text;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok: Account;
+ };
+type Bank = 
+ record {
+   accounts: vec Account__1;
+   id: principal;
+   name: text;
+   transactions: vec Transaction;
+   users: vec User__1;
+ };
+type Account__1 = 
+ record {
+   balance: int;
+   transactions: vec Transaction;
+ };
+type Account = 
+ record {
+   balance: int;
+   transactions: vec Transaction;
+ };
+service : () -> anon_class_20_1

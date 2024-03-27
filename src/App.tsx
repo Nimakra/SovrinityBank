@@ -4,26 +4,43 @@ import {
   Route,
   useNavigationType,
   useLocation,
+  Navigate
 } from "react-router-dom";
-import OneWeb3Main from "./pages/OneWeb3Main";
-import Invest from "./pages/Invest";
-import Communities from "./pages/Communities";
-import Blogs from "./pages/Blogs";
-import Learn from "./pages/Learn";
-import Courses from "./pages/Courses";
-import Build from "./pages/Build";
-import AddCourses from "./pages/AddCourses";
-import AddBlogs from "./pages/AddBlogs";
+import SovrinityHome from "./pages/SovrinityHome";
+import Deposit from "./pages/Deposit";
+import Dashboard from "./pages/Dashboard";
+import Withdraw from "./pages/Withdraw";
+import Transactions from "./pages/Transactions";
+import Transfer from "./pages/Transfer";
 import { useAuth } from "./components/hooks/ContextWrapper";
+import { initActors } from './storage-config/functions';
+
+function ProtectedRoute({ element, isAuthenticated }) {
+  if (!isAuthenticated) {
+    return <Navigate to="/" />;
+  }
+
+  return element;
+}
 
 
 function App() {
-  const { backendActor, login, logout, isAuthenticated, identity } = useAuth();
+  const { backendActor, setStorageInitiated, login, logout, isAuthenticated, identity, storageInitiated } = useAuth();
   const action = useNavigationType();
   const location = useLocation();
   const pathname = location.pathname;
 
+  const init = async () => {
+    const res = await initActors();
+    if (res) {
+        setStorageInitiated(true)
+    }
+  };
 
+  useEffect(() => {
+    init();
+  }, []);
+  
 
   useEffect(() => {
     if (action !== "POP") {
@@ -44,7 +61,11 @@ function App() {
         title = "";
         metaDescription = "";
         break;
-      case "/communities":
+      case "/Deposit":
+        title = "";
+        metaDescription = "";
+        break;
+        case "/Transfer":
         title = "";
         metaDescription = "";
         break;
@@ -75,16 +96,13 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<OneWeb3Main />} />
-      <Route path="/invest" element={<Invest />} />
-      <Route path="/communities" element={<Communities />} />
-      <Route path="/blogs" element={<Blogs/>} />
-      <Route path="/build" element={<Build />} />
-      <Route path="/learn" element={<Learn />} />
-      <Route path="/courses" element={<Courses backendActor = {backendActor} />} />
-      <Route path="/addCourses" element={<AddCourses backendActor = {backendActor} />} />
-      <Route path="/addBlogs" element={<AddBlogs />} />
-    </Routes>
+    <Route path="/" element={<SovrinityHome />} />
+    <Route path="/deposit" element={<ProtectedRoute element={<Deposit />} isAuthenticated={isAuthenticated} />} />
+    <Route path="/withdraw" element={<ProtectedRoute element={<Withdraw />} isAuthenticated={isAuthenticated} />} />
+    <Route path="/transfer" element={<ProtectedRoute element={<Transfer />} isAuthenticated={isAuthenticated} />} />
+    <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} isAuthenticated={isAuthenticated} />} />
+    <Route path="/transactions" element={<ProtectedRoute element={<Transactions />} isAuthenticated={isAuthenticated} />} />
+  </Routes>
   );
 }
 export default App;

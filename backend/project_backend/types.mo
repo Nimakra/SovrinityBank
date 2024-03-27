@@ -2,9 +2,10 @@ import Principal "mo:base/Principal";
 import Text "mo:base/Text";
 import Int "mo:base/Int";
 import Blob "mo:base/Blob";
+import List "mo:base/List";
 
 module {
-   
+
     public type Role = {
         #owner;
         #admin;
@@ -16,29 +17,34 @@ module {
         #lowest;
     };
 
-    public type UserData = {
-        id: Principal;
-        username: Text;
-        created: Int;
+    public type User = {
+        id : Principal;
+        username : Text;
+        handle : Text;
+        created : Text;
+        account : Account;
     };
 
-    public type Blog = {
-        id: Text;
-        title: Text;
-        introduction: Text;
-        body: Text;
-        images : [Text];
-        date: Text;
-        author: Text;
+    public type Account = {
+        balance : Int;
+        transactions : [Transaction];
     };
 
-    public type Course = {
-        id: Text;
-        title: Text;
-        author: Text;
-        plan: Text;
-        level: Text;
-        url: Text;
+    public type Transaction = {
+        id : Text;
+        name : Text;
+        amount : Int;
+        sender : Principal;
+        recipient : Principal;
+        timestamp : Text;
+    };
+
+    public type Bank = {
+        id : Principal;
+        name : Text;
+        users : [User];
+        accounts : [Account];
+        transactions : [Transaction];
     };
 
 };

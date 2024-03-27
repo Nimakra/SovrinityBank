@@ -11,81 +11,52 @@ import List "mo:base/List";
 import Array "mo:base/Array";
 import AssocList "mo:base/AssocList";
 import Error "mo:base/Error";
-import Types "types";
 import Buffer "mo:base/Buffer";
+import TrieSet "mo:base/TrieSet";
+import Hash "mo:base/Hash";
+import Nat32 "mo:base/Nat32";
+import Nat "mo:base/Nat";
 
 shared ({ caller = initializer }) actor class () {
 
-    /* public type UserData = {
-        id: Principal;
-        username: Text;
-        created: Int;
-    };
-
-    public type Blog = {
-        id: Text;
-        title: Text;
-        introduction: Text;
-        body: Text;
-        image: [Text];
-        date: Text;
-        author: Text;
-    };
-
-    public type Course = {
-        id: Text;
-        title: Text;
-        author: Text;
-        plan: Text;
-        level: Text;
-        url: Text;
-    }; */
-
     type Permission = Type.Permission;
     type Role = Type.Role;
-    type UserData = Type.UserData;
-    type Blog = Type.Blog;
-    type Course = Type.Course;
+    type User = Type.User;
+    type Account = Type.Account;
+    type Transaction = Type.Transaction;
+    type Bank = Type.Bank;
 
-    var userData : TrieMap.TrieMap<Principal, UserData> = TrieMap.TrieMap(Principal.equal, Principal.hash);
-    var blogStorage : TrieMap.TrieMap<Text, Blog> = TrieMap.TrieMap(Text.equal, Text.hash);
-    var courseStorage : TrieMap.TrieMap<Text, Course> = TrieMap.TrieMap(Text.equal, Text.hash);
-    var userBlogs : TrieMap.TrieMap<Principal, List.List<Blog>> = TrieMap.TrieMap(Principal.equal, Principal.hash);
+    var userStorage : TrieMap.TrieMap<Principal, User> = TrieMap.TrieMap(Principal.equal, Principal.hash);
+    var transactionStorage : TrieMap.TrieMap<Text, Transaction> = TrieMap.TrieMap(Text.equal, Text.hash);
+    var bankStorage : TrieMap.TrieMap<Principal, Bank> = TrieMap.TrieMap(Principal.equal, Principal.hash);
 
     // Access Control
     private stable var roles : AssocList.AssocList<Principal, Role> = List.nil();
     private stable var role_requests : AssocList.AssocList<Principal, Role> = List.nil();
 
-    // Canister State
-    private stable var userDataState : [(Principal, UserData)] = [];
-    private stable var blogState : [(Text, Blog)] = [];
-    private stable var courseState : [(Text, Course)] = [];
-    private stable var userBlogsState : [(Principal, List.List<Blog>)] = [];
 
-    system func preupgrade() {
-        userDataState := Iter.toArray(userData.entries());
-        blogState := Iter.toArray(blogStorage.entries());
-        courseState := Iter.toArray(courseStorage.entries());
-        userBlogsState := Iter.toArray(userBlogs.entries());
+    public shared ({ caller }) func createBank(bank : Bank) : async Text {
+        switch (bankStorage.get(caller)) {
+            case (?_) {
+                return "Bank with this ID already exists";
+            };
+            case null {
+
+                bankStorage.put(caller, bank);
+
+                return "Bank created successfully";
+            };
+        };
     };
-
-    system func postupgrade() {
-        userData := TrieMap.fromEntries(userDataState.vals(), Principal.equal, Principal.hash);
-        blogStorage := TrieMap.fromEntries(blogState.vals(), Text.equal, Text.hash);
-        courseStorage := TrieMap.fromEntries(courseState.vals(), Text.equal, Text.hash);
-        userBlogs := TrieMap.fromEntries(userBlogsState.vals(), Principal.equal, Principal.hash);
-    };
-
-    func key(x : Text) : Trie.Key<Text> { { key = x; hash = Text.hash(x) } };
 
     //adds a new user to the system
-    public shared ({ caller }) func addUser(user : UserData) : async () {
-        userData.put(caller, user);
+    public shared ({ caller }) func addUser(user : User) : async () {
+        userStorage.put(caller, user);
     };
 
     //get user
-    public shared query ({ caller }) func getUser() : async Result.Result<UserData, Text> {
-        switch (userData.get(caller)) {
+    public shared query ({ caller }) func getUser() : async Result.Result<User, Text> {
+        switch (userStorage.get(caller)) {
             case (null) {
                 return #err("User not found");
             };
@@ -96,166 +67,275 @@ shared ({ caller = initializer }) actor class () {
     };
 
     //get all users
-    public shared query func getAllUsers() : async [UserData] {
-        Iter.toArray(userData.vals());
+    public shared query func getAllUsers() : async [User] {
+        Iter.toArray(userStorage.vals());
     };
 
-    public shared ({ caller }) func updateUser(user : UserData) : async () {
+    //get all transactions
+    public shared query func getAllTransactions() : async [Transaction] {
+        Iter.toArray(transactionStorage.vals());
+    };
+
+    public shared ({ caller }) func updateUser(user : User) : async () {
         assert (isAdmin(caller) or caller == user.id);
-        userData.put(user.id, user);
+        userStorage.put(user.id, user);
     };
 
-    //create blog
-    public shared ({ caller }) func createBlog(blog : Blog) : async () {
-        blogStorage.put(blog.id, blog);
-        let userBlog = switch (userBlogs.get(caller)) {
-            case (null) { List.nil<Blog>() };
-            case (?blogs) { blogs };
+    //create account
+    public shared ({ caller }) func createAccount(balance : Int) : async () {
+        // Create a new account with the provided balance
+        let account : Account = {
+            balance = balance;
+            transactions = [];
         };
-        let updatedUserBlogs = List.push<Blog>(blog, userBlog); // append the new blog to the list
-        userBlogs.put(caller, updatedUserBlogs); // update the userBlogs with the new list
-    };
 
-    //get Blog
-    /*public shared query func getBlog(id : Text) : async Result.Result<Blog, Text> {
-        switch (blogStorage.get(id)) {
+        // Get the user who is creating the account
+        let user = switch (userStorage.get(caller)) {
             case (null) {
-                return #err("Blog not found");
+                return; 
             };
-            case (?blog) {
-                return #ok(blog);
+            case (?user) {
+                user;
             };
         };
-    }; */
 
-    // get my blogs
-    public shared query ({ caller }) func getMyBlogs() : async [Blog] {
-        switch (userBlogs.get(caller)) {
+
+        let updatedUser : User = {
+            id = user.id;
+            username = user.username;
+            handle = user.handle;
+            created = user.created;
+            account = account;
+        };
+
+        // Update the user in the user storage
+        userStorage.put(caller, updatedUser);
+    };
+
+    //deposit
+    public shared ({ caller }) func deposit(amount : Int, id : Text, timestamp : Text) : async Result.Result<Account, Text> {
+        // Get the account
+        let user = switch (userStorage.get(caller)) {
+            case (null) {
+                return #err("User not found");
+            };
+            case (?user) {
+                user;
+            };
+        };
+
+        let transaction : Transaction = {
+            id = id;
+            name = "Deposit";
+            amount = amount;
+            sender = caller;
+            recipient = caller;
+            timestamp = timestamp;
+        };
+
+        let updatedAccount : Account = {
+            balance = user.account.balance + amount;
+            transactions = Array.append(user.account.transactions, [transaction]);
+        };
+
+        let updatedUser : User = {
+            id = user.id;
+            username = user.username;
+            handle = user.handle;
+            created = user.created;
+            account = updatedAccount;
+        };
+
+        userStorage.put(caller, updatedUser);
+        transactionStorage.put(id, transaction);
+
+        return #ok(updatedAccount);
+    };
+
+    public shared ({ caller }) func withdraw(amount : Int, id : Text, timestamp : Text) : async Result.Result<Account, Text> {
+
+        let user = switch (userStorage.get(caller)) {
+            case (null) {
+                return #err("User not found");
+            };
+            case (?user) {
+                user;
+            };
+        };
+
+        if (user.account.balance < amount) {
+            return #err("Insufficient balance");
+        };
+
+        let transaction : Transaction = {
+            id = id;
+            name = "Withdrawal";
+            amount = amount;
+            sender = caller;
+            recipient = caller;
+            timestamp = timestamp;
+        };
+
+        let updatedAccount : Account = {
+            balance = user.account.balance - amount;
+            transactions = Array.append(user.account.transactions, [transaction]);
+        };
+
+        let updatedUser : User = {
+            id = user.id;
+            username = user.username;
+            handle = user.handle;
+            created = user.created;
+            account = updatedAccount;
+        };
+
+        userStorage.put(caller, updatedUser);
+        transactionStorage.put(id, transaction);
+
+        return #ok(updatedAccount);
+    };
+
+    // Generation of a Zero-Knowledge Proof (ZKP)
+    private func generateProof(account : Account, amount : Int) : (Int, Int) {
+        return (account.balance, amount);
+    };
+
+    private func verifyProof(proof : (Int, Int)) : Bool {
+        let (balance, amount) = proof;
+        return balance >= amount;
+    };
+
+    public shared ({ caller }) func transfer(recipientId : Principal, amount : Int, id : Text, timestamp : Text) : async Result.Result<Text, Text> {
+
+        let sender = switch (userStorage.get(caller)) {
+            case (null) {
+                return #err("Sender account does not exist");
+            };
+            case (?user) {
+                user;
+            };
+        };
+
+        let recipient = switch (userStorage.get(recipientId)) {
+            case (null) {
+                return #err("Recipient account does not exist");
+            };
+            case (?user) {
+                user;
+            };
+        };
+
+        // Generate a ZKP for the sender's balance
+        let proof = generateProof(sender.account, amount);
+        let zkp = verifyProof(proof);
+
+        // Verify the ZKP
+        if (not zkp) {
+            return #err("Insufficient balance for transfer");
+        };
+
+        let transaction : Transaction = {
+            id = id;
+            name = "Transfer";
+            amount = amount;
+            sender = caller;
+            recipient = caller;
+            timestamp = timestamp;
+        };
+
+        let updatedSenderAccount : Account = {
+            balance = sender.account.balance - amount;
+            transactions = Array.append(sender.account.transactions, [transaction]);
+        };
+
+        let updatedRecipientAccount : Account = {
+            balance = recipient.account.balance + amount;
+            transactions = Array.append(recipient.account.transactions, [transaction]);
+        };
+
+        let updatedSender : User = {
+            id = sender.id;
+            username = sender.username;
+            handle = sender.handle;
+            created = sender.created;
+            account = updatedSenderAccount;
+        };
+        let updatedRecipient : User = {
+            id = recipient.id;
+            username = recipient.username;
+            handle = recipient.handle;
+            created = recipient.created;
+            account = updatedRecipientAccount;
+        };
+        userStorage.put(caller, updatedSender);
+        userStorage.put(recipientId, updatedRecipient);
+        transactionStorage.put(id, transaction);
+
+        return #ok("Transfer successful");
+    };
+
+    public shared query ({ caller }) func getTransaction(transactionId : Text) : async ?Transaction {
+
+        let user = switch (userStorage.get(caller)) {
+            case (null) {
+                return null;
+            };
+            case (?user) {
+                user;
+            };
+        };
+
+        let transaction = Array.find(
+            user.account.transactions,
+            func(t : Transaction) : Bool {
+                t.id == transactionId;
+            },
+        );
+
+        return transaction;
+    };
+
+    public shared query ({ caller }) func getMyTransactions() : async [Transaction] {
+
+        let user = switch (userStorage.get(caller)) {
             case (null) {
                 return [];
             };
-            case (?blogs) {
-                return List.toArray(blogs);
+            case (?user) {
+                user;
             };
         };
+
+        return user.account.transactions;
     };
 
-    //get all blogs
-    public shared query func getAllBlogs() : async [Blog] {
-        Iter.toArray(blogStorage.vals());
-    };
+    public shared query ({ caller }) func getAccountBalance() : async Int {
 
-    //edit blog
-    public shared ({ caller }) func editMyBlog(blog : Blog) : async () {
-        let userBlog = switch (userBlogs.get(caller)) {
-            case (null) { List.nil<Blog>() };
-            case (?blogs) { blogs };
-        };
-        let updatedUserBlogs = List.map<Blog, Blog>(userBlog, func(b : Blog) : Blog = if (b.id == blog.id) { blog } else { b });
-        userBlogs.put(caller, updatedUserBlogs);
-        blogStorage.put(blog.id, blog);
-    };
-
-    //delete blog
-    public shared ({ caller }) func deleteBlog(id : Text) : async () {
-        if (isAdmin(caller)) {
-            blogStorage.delete(id);
-        } else {
-            let userBlog = switch (userBlogs.get(caller)) {
-                case (null) { List.nil<Blog>() };
-                case (?blogs) { blogs };
+        let user = switch (userStorage.get(caller)) {
+            case (null) {
+                return 0;
             };
-            let updatedUserBlogs = List.filter<Blog>(userBlog, func(b : Blog) : Bool = b.id != id);
-            userBlogs.put(caller, updatedUserBlogs);
-            blogStorage.delete(id);
+            case (?user) {
+                user;
+            };
         };
+
+        return user.account.balance;
     };
 
-    //create course
-    public shared ({ caller }) func createCourse(course : Course) : async () {
-        courseStorage.put(course.id, course);
+    public shared query ({ caller }) func getBankTransactions() : async [Transaction] {
+        // Get the bank
+        let bank = switch (bankStorage.get(caller)) {
+            case (null) {
+                return [];
+            };
+            case (?bank) {
+                bank;
+            };
+        };
+
+        return bank.transactions;
     };
-
-    //get all courses
-    public shared query func getAllCourses() : async [Course] {
-        Iter.toArray(courseStorage.vals());
-    };
-
-    //edit course
-    public shared ({ caller }) func editCourse(course : Course) : async () {
-        courseStorage.put(course.id, course);
-    };
-
-    //delete course
-    public shared ({ caller }) func deleteCourse(id : Text) : async () {
-    if (isAdmin(caller)) {
-        courseStorage.delete(id);
-    } else {
-        throw Error.reject("Permission denied");
-    }
-};
-
-    /*public shared query func getSuppliersDocuments(id : Principal) : async [DocumentInfo] {
-    let docsIds : List.List<docId> = switch (supplierDocs.get(id)) {
-      case (null) {
-        List.nil();
-      };
-      case (?result) { result };
-    };
-
-    let docs = Buffer.Buffer<DocumentInfo>(0);
-
-    let items = List.toArray(docsIds);
-
-    for (doc in items.vals()) {
-      switch (documents.get(doc)) {
-        case (null) {};
-        case (?result) { docs.add(result) };
-      };
-    };
-    return Buffer.toArray(docs);
-  };
-};
-
-
- public shared query ({ caller }) func getSupplierByName(name : Text) : async [User] {
-  let suppliers = TrieMap.mapFilter<Principal, User, User>(
-    users,
-    Principal.equal,
-    Principal.hash,
-    func(key, user) = if (user.isSupplier and user.companyName == name and (isAdmin(caller) or user.isVisible)) {
-      ?user;
-    } else {
-      null;
-    },
-  );
-  Iter.toArray(suppliers.vals());
-};
-
-public shared query ({ caller }) func getFashionHouseSuppliers(id : Principal) : async [User] {
-  let suppliersList : List.List<Principal> = switch (fashionHouseSuppliersMap.get(id)) {
-    case (null) {
-      List.nil();
-    };
-    case (?result) { result };
-  };
-  let suppliers = Buffer.Buffer<User>(0);
-  let items = List.toArray(suppliersList);
-
-  for (supplierId in items.vals()) {
-    switch (users.get(supplierId)) {
-      case (null) {};
-      case (?result) {
-        if (isAdmin(caller) or result.isVisible) {
-          suppliers.add(result);
-        }
-      };
-    };
-  };
-  return Buffer.toArray(suppliers);
-};
-
-*/
 
     // Access Control
     func principal_eq(a : Principal, b : Principal) : Bool {
@@ -313,12 +393,12 @@ public shared query ({ caller }) func getFashionHouseSuppliers(id : Principal) :
     };
 
     // Return the principal of the message caller/user identity
-    public shared ({ caller }) func callerPrincipal() : async Principal {
+    public shared query ({ caller }) func callerPrincipal() : async Principal {
         return caller;
     };
 
     // Return the role of the message caller/user identity
-    public shared ({ caller }) func my_role() : async Text {
+    public shared query ({ caller }) func my_role() : async Text {
         let role = get_role(caller);
         switch (role) {
             case (null) {

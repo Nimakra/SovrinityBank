@@ -1,20 +1,12 @@
 {
   "canisters": {
-    "oraculumHub_backend": {
+    "Sovrinity_Bank_backend": {
       "type": "motoko",
       "main": "backend/project_backend/main.mo",
       "candid": "backend/project_backend/index.did",
       "gzip": true
     },
 
-    "file_scaling_manager": {
-      "main": "backend/storage/FileScalingManager.mo",
-      "type": "motoko"
-    },
-    "file_storage": {
-      "main": "backend/storage/FileStorage.mo",
-      "type": "motoko"
-    },
 
     "internet_identity": {
       "type": "custom",
@@ -28,8 +20,8 @@
       "frontend": {}
     },
 
-    "oraculumHub_frontend": {
-      "dependencies": ["oraculumHub_backend"],
+    "Sovrinity_Bank_frontend": {
+      "dependencies": ["Sovrinity_Bank_backend"],
       "entrypoint": "src/index.html",
       "source": ["dist/"],
       "type": "assets",

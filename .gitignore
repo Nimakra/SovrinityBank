@@ -4,6 +4,7 @@
 
 # Production
 /build
+/declarations
 
 # Misc
 .DS_Store
@@ -33,6 +34,5 @@ pids
 # OS-specific
 Thumbs.db
 
-.azle
 .dfx
-#.env
+.env

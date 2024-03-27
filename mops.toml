@@ -1,4 +1,4 @@
 [dependencies]
-base = "0.8.8"
+base = "0.11.1"
 hashmap = "https://github.com/ZhenyaUsenko/motoko-hash-map#master"
 hash-map = "0.0.2"

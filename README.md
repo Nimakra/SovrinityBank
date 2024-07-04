@@ -13,6 +13,8 @@ Are you a user worried about your privacy on the blockchain? Or are you simply l
 - Withdraw
 - Dashboard
 
+![Dashboard](./src/assets/Dashboard.jpg)
+
 ## Getting Started
 
 ### Prerequisites
@@ -23,9 +25,6 @@ After you have installed the required tools, you can move on to the next step.
 ### Installation
 
 1. **Clone the repository:**
-
-    ```bash
-   git clone https://github.com/Nimakra/SovrinityBank.git
 
     ```bash
    git clone https://github.com/Nimakra/SovrinityBank.git
@@ -53,6 +52,7 @@ After you have installed the required tools, you can move on to the next step.
 
 ## Limitations, Recommendations and Future Works
 
+- No actual tokens were used. This project demonstrates a proof of concept
 - More features are in progress
 
 ## Let's Build Together

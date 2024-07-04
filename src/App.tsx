@@ -13,7 +13,7 @@ import Withdraw from "./pages/Withdraw";
 import Transactions from "./pages/Transactions";
 import Transfer from "./pages/Transfer";
 import { useAuth } from "./components/hooks/ContextWrapper";
-import { initActors } from './storage-config/functions';
+
 
 function ProtectedRoute({ element, isAuthenticated }) {
   if (!isAuthenticated) {
@@ -29,18 +29,6 @@ function App() {
   const action = useNavigationType();
   const location = useLocation();
   const pathname = location.pathname;
-
-  const init = async () => {
-    const res = await initActors();
-    if (res) {
-        setStorageInitiated(true)
-    }
-  };
-
-  useEffect(() => {
-    init();
-  }, []);
-  
 
   useEffect(() => {
     if (action !== "POP") {
